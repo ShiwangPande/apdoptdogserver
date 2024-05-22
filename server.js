@@ -1,16 +1,12 @@
+import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import mysql from 'mysql';
-import express from 'express';
 import { config } from 'dotenv';
 
 config({ path: "./config/config.env" });
-
 const app = express();
-const PORT = process.env.PORT || 8081;
 
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(cors());
 
 // Create a MySQL connection pool
 const pool = mysql.createPool({
@@ -18,115 +14,113 @@ const pool = mysql.createPool({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-// Function to execute SQL queries
-const query = (sql, params, callback) => {
-    pool.getConnection((err, connection) => {
-        if (err) {
-            // Handle connection error
-            callback(err, null);
-            return;
-        }
-
-        connection.query(sql, params, (error, results, fields) => {
-            connection.release(); // Release the connection
-            callback(error, results);
-        });
-    });
-};
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(cors());
 
 // Create the 'pets' table if it doesn't exist
-const createPetsTable = () => {
-    const sql = `CREATE TABLE IF NOT EXISTS pets (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
-    pic VARCHAR(255),
-    gender ENUM('Male', 'Female'),
-    breed VARCHAR(255),
-    age INT,
-    weight VARCHAR(50),
-    location VARCHAR(255),
-    description TEXT,
-    diseases TEXT
-  )`;
+pool.getConnection((err, connection) => {
+    if (err) {
+        console.error('Error connecting to MySQL:', err);
+        return;
+    }
 
-    query(sql, [], (error, results) => {
+    connection.query(`
+    CREATE TABLE IF NOT EXISTS pets (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255),
+      pic VARCHAR(255),
+      gender VARCHAR(255),
+      breed VARCHAR(255),
+      age INT,
+      weight VARCHAR(50),
+      location VARCHAR(255),
+      description TEXT,
+      diseases TEXT
+    )`, (error, results, fields) => {
+        connection.release(); // Release the connection
         if (error) {
             console.error('Error creating pets table:', error);
         } else {
             console.log('Pets table created successfully');
         }
     });
-};
+});
+app.get('/', (req, res) => {
+    return res.json({ message: "Hello from backend server" });
+});
 
-// Call the function to create the 'pets' table
-createPetsTable();
-
-// Routes
-
+// Route to handle POST requests to add data to the database
 app.post('/api/pets', (req, res) => {
     const { name, pic, gender, breed, age, weight, location, description, diseases } = req.body;
-    const queryStr = `INSERT INTO pets (name, pic, gender, breed, age, weight, location, description, diseases) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const query = `INSERT INTO pets (name, pic, gender, breed, age, weight, location, description, diseases) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    query(queryStr, [name, pic, gender, breed, age, weight, location, description, diseases], (err, results) => {
+    pool.query(query, [name, pic, gender, breed, age, weight, location, description, diseases], (err, results) => {
         if (err) {
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json('Error: ' + err.message);
         }
         res.json({ id: results.insertId, ...req.body });
     });
 });
 
+// Route to fetch data from the database
 app.get('/api/pets', (req, res) => {
-    const queryStr = `SELECT * FROM pets`;
+    const query = `SELECT * FROM pets`;
 
-    query(queryStr, [], (err, rows) => {
+    pool.query(query, (err, rows) => {
         if (err) {
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json('Error: ' + err.message);
         }
         res.json(rows);
     });
 });
 
-// Handle PUT request to update pet information
+// Route to handle PUT requests to update pet information
 app.put('/api/pets/:id', (req, res) => {
     const { id } = req.params;
     const { name, pic, gender, breed, age, weight, location, description, diseases } = req.body;
 
-    const queryStr = `
-        UPDATE pets 
-        SET 
-            name = ?, 
-            pic = ?, 
-            gender = ?, 
-            breed = ?, 
-            age = ?, 
-            weight = ?, 
-            location = ?, 
-            description = ?, 
-            diseases = ? 
-        WHERE 
-            id = ?
-    `;
+    const query = `
+    UPDATE pets 
+    SET 
+      name = ?, 
+      pic = ?, 
+      gender = ?, 
+      breed = ?, 
+      age = ?, 
+      weight = ?, 
+      location = ?, 
+      description = ?, 
+      diseases = ? 
+    WHERE 
+      id = ?
+  `;
 
-    query(queryStr, [name, pic, gender, breed, age, weight, location, description, diseases, id], (err, results) => {
+    pool.query(query, [name, pic, gender, breed, age, weight, location, description, diseases, id], (err, results) => {
         if (err) {
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json('Error: ' + err.message);
         }
         res.json({ id: id, message: 'Pet info updated successfully' });
     });
 });
 
+// Route to handle DELETE requests to delete pet information
 app.delete('/api/pets/:id', (req, res) => {
     const { id } = req.params;
-    const queryStr = `DELETE FROM pets WHERE id = ?`;
+    const query = `DELETE FROM pets WHERE id = ?`;
 
-    query(queryStr, id, (err, results) => {
+    pool.query(query, [id], (err, results) => {
         if (err) {
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json('Error: ' + err.message);
         }
         res.json({ deletedID: id });
     });
 });
 
+// Start the Express server
+const PORT = process.env.PORT || 8081;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
