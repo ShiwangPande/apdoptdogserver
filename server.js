@@ -22,7 +22,16 @@ const pool = mysql.createPool({
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors());
+const allowedOrigins = ['https://adoptdog.vercel.app'];
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    }
+}));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
