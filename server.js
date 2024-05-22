@@ -5,8 +5,8 @@ import mysql from 'mysql';
 import { config } from 'dotenv';
 
 config({ path: "./config/config.env" });
-const app = express();
 
+const app = express();
 
 // Create a MySQL connection pool
 const pool = mysql.createPool({
@@ -30,18 +30,18 @@ pool.getConnection((err, connection) => {
     }
 
     connection.query(`
-    CREATE TABLE IF NOT EXISTS pets (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      name TEXT,
-      pic BLOB,
-      gender TEXT,
-      breed TEXT,
-      age INT,
-      weight INT,
-      location TEXT,
-      description TEXT,
-      diseases TEXT
-    )`, (error, results, fields) => {
+        CREATE TABLE IF NOT EXISTS pets (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name TEXT,
+            pic LONGBLOB,
+            gender TEXT,
+            breed TEXT,
+            age INT,
+            weight INT,
+            location TEXT,
+            description TEXT,
+            diseases TEXT
+        )`, (error, results, fields) => {
         connection.release(); // Release the connection
         if (error) {
             console.error('Error creating pets table:', error);
@@ -50,11 +50,11 @@ pool.getConnection((err, connection) => {
         }
     });
 });
+
 app.get('/', (req, res) => {
-    return res.json({ message: "Hello from backend server" });
+    res.json({ message: "Hello from backend server" });
 });
 
-// Route to handle POST requests to add data to the database
 app.post('/api/pets', (req, res) => {
     const { name, pic, gender, breed, age, weight, location, description, diseases } = req.body;
     const query = `INSERT INTO pets (name, pic, gender, breed, age, weight, location, description, diseases) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
@@ -67,7 +67,6 @@ app.post('/api/pets', (req, res) => {
     });
 });
 
-// Route to fetch data from the database
 app.get('/api/pets', (req, res) => {
     const query = `SELECT * FROM pets`;
 
@@ -79,26 +78,25 @@ app.get('/api/pets', (req, res) => {
     });
 });
 
-// Route to handle PUT requests to update pet information
 app.put('/api/pets/:id', (req, res) => {
     const { id } = req.params;
     const { name, pic, gender, breed, age, weight, location, description, diseases } = req.body;
 
     const query = `
-    UPDATE pets 
-    SET 
-      name = ?, 
-      pic = ?, 
-      gender = ?, 
-      breed = ?, 
-      age = ?, 
-      weight = ?, 
-      location = ?, 
-      description = ?, 
-      diseases = ? 
-    WHERE 
-      id = ?
-  `;
+        UPDATE pets 
+        SET 
+            name = ?, 
+            pic = ?, 
+            gender = ?, 
+            breed = ?, 
+            age = ?, 
+            weight = ?, 
+            location = ?, 
+            description = ?, 
+            diseases = ? 
+        WHERE 
+            id = ?
+    `;
 
     pool.query(query, [name, pic, gender, breed, age, weight, location, description, diseases, id], (err, results) => {
         if (err) {
@@ -108,7 +106,6 @@ app.put('/api/pets/:id', (req, res) => {
     });
 });
 
-// Route to handle DELETE requests to delete pet information
 app.delete('/api/pets/:id', (req, res) => {
     const { id } = req.params;
     const query = `DELETE FROM pets WHERE id = ?`;
@@ -121,6 +118,5 @@ app.delete('/api/pets/:id', (req, res) => {
     });
 });
 
-// Start the Express server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
