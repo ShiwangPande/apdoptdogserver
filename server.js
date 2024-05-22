@@ -32,13 +32,13 @@ pool.getConnection((err, connection) => {
     connection.query(`
     CREATE TABLE IF NOT EXISTS pets (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(255),
-      pic VARCHAR(255),
-      gender VARCHAR(255),
-      breed VARCHAR(255),
+      name TEXT,
+      pic BLOB,
+      gender TEXT,
+      breed TEXT,
       age INT,
-      weight VARCHAR(50),
-      location VARCHAR(255),
+      weight INT,
+      location TEXT,
       description TEXT,
       diseases TEXT
     )`, (error, results, fields) => {
