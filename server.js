@@ -20,7 +20,15 @@ const pool = mysql.createPool({
 });
 
 app.use(bodyParser.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cors());
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
 
 // Create the 'pets' table if it doesn't exist
 pool.getConnection((err, connection) => {
@@ -30,18 +38,18 @@ pool.getConnection((err, connection) => {
     }
 
     connection.query(`
-        CREATE TABLE IF NOT EXISTS pets (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name TEXT,
-            pic LONGBLOB,
-            gender TEXT,
-            breed TEXT,
-            age INT,
-            weight INT,
-            location TEXT,
-            description TEXT,
-            diseases TEXT
-        )`, (error, results, fields) => {
+    CREATE TABLE IF NOT EXISTS pets (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name TEXT,
+        pic BLOB NOT NULL,
+        gender TEXT,
+        breed TEXT,
+        age INT,
+        weight INT,
+        location TEXT,
+        description TEXT,
+        diseases TEXT
+    )`, (error, results, fields) => {
         connection.release(); // Release the connection
         if (error) {
             console.error('Error creating pets table:', error);
@@ -51,19 +59,28 @@ pool.getConnection((err, connection) => {
     });
 });
 
+// API endpoints
 app.get('/', (req, res) => {
     res.json({ message: "Hello from backend server" });
 });
-
 app.post('/api/pets', (req, res) => {
     const { name, pic, gender, breed, age, weight, location, description, diseases } = req.body;
-    const query = `INSERT INTO pets (name, pic, gender, breed, age, weight, location, description, diseases) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    pool.query(query, [name, pic, gender, breed, age, weight, location, description, diseases], (err, results) => {
+    // Base64 encoded image data
+    const imageData = req.body.pic;
+
+    const sql = 'INSERT INTO pets (name, pic, gender, breed, age, weight, location, description, diseases) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const values = [name, imageData, gender, breed, age, weight, location, description, diseases];
+
+    pool.query(sql, values, (err, results) => {
         if (err) {
-            return res.status(400).json('Error: ' + err.message);
+            console.error('Error executing query: ', err);
+            res.status(500).json({ error: 'Error executing query' });
+            return;
         }
-        res.json({ id: results.insertId, ...req.body });
+
+        console.log('Pet added successfully');
+        res.status(200).json({ message: 'Pet added successfully' });
     });
 });
 
