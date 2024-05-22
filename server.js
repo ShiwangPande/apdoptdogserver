@@ -41,7 +41,7 @@ pool.getConnection((err, connection) => {
     CREATE TABLE IF NOT EXISTS pets (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name TEXT,
-        pic BLOB NOT NULL,
+        pic VARCHAR(255),
         gender TEXT,
         breed TEXT,
         age INT,
