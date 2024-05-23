@@ -50,7 +50,7 @@ pool.getConnection((err, connection) => {
     CREATE TABLE IF NOT EXISTS pets (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name TEXT,
-        pic VARCHAR(255),
+        pic LONGTEXT,
         gender TEXT,
         breed TEXT,
         age INT,
@@ -64,6 +64,24 @@ pool.getConnection((err, connection) => {
             console.error('Error creating pets table:', error);
         } else {
             console.log('Pets table created successfully');
+        }
+    });
+});
+
+// Update the 'pic' column type to LONGTEXT if it already exists
+pool.getConnection((err, connection) => {
+    if (err) {
+        console.error('Error connecting to MySQL:', err);
+        return;
+    }
+
+    connection.query(`
+    ALTER TABLE pets MODIFY pic LONGTEXT`, (error, results, fields) => {
+        connection.release(); // Release the connection
+        if (error) {
+            console.error('Error modifying pic column:', error);
+        } else {
+            console.log('Pic column modified to LONGTEXT successfully');
         }
     });
 });
