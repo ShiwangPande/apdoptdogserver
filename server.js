@@ -72,6 +72,7 @@ pool.getConnection((err, connection) => {
 app.get('/', (req, res) => {
     res.json({ message: "Hello from backend server" });
 });
+
 app.post('/api/pets', (req, res) => {
     const { name, pic, gender, breed, age, weight, location, description, diseases } = req.body;
 
@@ -84,7 +85,7 @@ app.post('/api/pets', (req, res) => {
     pool.query(sql, values, (err, results) => {
         if (err) {
             console.error('Error executing query: ', err);
-            res.status(500).json({ error: 'Error executing query' });
+            res.status(500).json({ error: 'Error executing query', details: err.message });
             return;
         }
 
