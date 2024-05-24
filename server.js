@@ -23,6 +23,7 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 const allowedOrigins = ['https://adoptdog.vercel.app'];
+// const allowedOrigins = ['http://localhost:3000'];
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
