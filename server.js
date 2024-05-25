@@ -23,7 +23,6 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 const allowedOrigins = ['https://adoptdog.vercel.app'];
-// const allowedOrigins = ['http://localhost:3000'];
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
@@ -95,11 +94,8 @@ app.get('/', (req, res) => {
 app.post('/api/pets', (req, res) => {
     const { name, pic, gender, breed, age, weight, location, description, diseases } = req.body;
 
-    // Base64 encoded image data
-    const imageData = req.body.pic;
-
     const sql = 'INSERT INTO pets (name, pic, gender, breed, age, weight, location, description, diseases) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    const values = [name, imageData, gender, breed, age, weight, location, description, diseases];
+    const values = [name, pic, gender, breed, age, weight, location, description, diseases];
 
     pool.query(sql, values, (err, results) => {
         if (err) {
