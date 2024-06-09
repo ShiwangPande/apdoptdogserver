@@ -22,7 +22,7 @@ const pool = mysql.createPool({
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-const allowedOrigins = ['https://adoptdog.vercel.app', 'http://localhost:3000'];
+const allowedOrigins = ['https://littlepaw.vercel.app', 'http://localhost:3000'];
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
