@@ -86,11 +86,46 @@ pool.getConnection((err, connection) => {
     });
 });
 
+// Create the 'annual_figures' table if it doesn't exist
+pool.getConnection((err, connection) => {
+    if (err) {
+        console.error('Error connecting to MySQL:', err);
+        return;
+    }
+
+    connection.query(`
+    CREATE TABLE IF NOT EXISTS annual_figures (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        species VARCHAR(255),
+        jan INT,
+        feb INT,
+        mar INT,
+        apr INT,
+        may INT,
+        jun INT,
+        jul INT,
+        aug INT,
+        sep INT,
+        oct INT,
+        nov INT,
+        dec INT,
+        total INT
+    )`, (error, results, fields) => {
+        connection.release(); // Release the connection
+        if (error) {
+            console.error('Error creating annual_figures table:', error);
+        } else {
+            console.log('Annual figures table created successfully');
+        }
+    });
+});
+
 // API endpoints
 app.get('/', (req, res) => {
     res.json({ message: "Hello from backend server" });
 });
 
+// Pets endpoints
 app.post('/api/pets', (req, res) => {
     const { name, pic, gender, breed, age, weight, location, description, diseases } = req.body;
 
@@ -151,6 +186,83 @@ app.put('/api/pets/:id', (req, res) => {
 app.delete('/api/pets/:id', (req, res) => {
     const { id } = req.params;
     const query = `DELETE FROM pets WHERE id = ?`;
+
+    pool.query(query, [id], (err, results) => {
+        if (err) {
+            return res.status(400).json('Error: ' + err.message);
+        }
+        res.json({ deletedID: id });
+    });
+});
+
+// Annual figures endpoints
+app.get('/api/annual-figures', (req, res) => {
+    const query = `SELECT * FROM annual_figures`;
+
+    pool.query(query, (err, rows) => {
+        if (err) {
+            return res.status(400).json('Error: ' + err.message);
+        }
+        res.json(rows);
+    });
+});
+
+app.post('/api/annual-figures', (req, res) => {
+    const { species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec } = req.body;
+    const total = jan + feb + mar + apr + may + jun + jul + aug + sep + oct + nov + dec;
+
+    const sql = 'INSERT INTO annual_figures (species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const values = [species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec, total];
+
+    pool.query(sql, values, (err, results) => {
+        if (err) {
+            console.error('Error executing query: ', err);
+            res.status(500).json({ error: 'Error executing query', details: err.message });
+            return;
+        }
+
+        console.log('Annual figure added successfully');
+        res.status(200).json({ message: 'Annual figure added successfully' });
+    });
+});
+
+app.put('/api/annual-figures/:id', (req, res) => {
+    const { id } = req.params;
+    const { species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec } = req.body;
+    const total = jan + feb + mar + apr + may + jun + jul + aug + sep + oct + nov + dec;
+
+    const query = `
+        UPDATE annual_figures 
+        SET 
+            species = ?, 
+            jan = ?, 
+            feb = ?, 
+            mar = ?, 
+            apr = ?, 
+            may = ?, 
+            jun = ?, 
+            jul = ?, 
+            aug = ?, 
+            sep = ?, 
+            oct = ?, 
+            nov = ?, 
+            dec = ?, 
+            total = ?
+        WHERE 
+            id = ?
+    `;
+
+    pool.query(query, [species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec, total, id], (err, results) => {
+        if (err) {
+            return res.status(400).json('Error: ' + err.message);
+        }
+        res.json({ id: id, message: 'Annual figure updated successfully' });
+    });
+});
+
+app.delete('/api/annual-figures/:id', (req, res) => {
+    const { id } = req.params;
+    const query = `DELETE FROM annual_figures WHERE id = ?`;
 
     pool.query(query, [id], (err, results) => {
         if (err) {
