@@ -208,7 +208,9 @@ app.get('/api/annual-figures', (req, res) => {
 });
 
 app.post('/api/annual-figures', (req, res) => {
+    console.log('Request body:', req.body); // Log the request body
     const { species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec } = req.body;
+    //
     const total = jan + feb + mar + apr + may + jun + jul + aug + sep + oct + nov + dec;
 
     const sql = 'INSERT INTO annual_figures (species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, `dec`, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
