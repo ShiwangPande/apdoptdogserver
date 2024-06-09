@@ -108,7 +108,7 @@ pool.getConnection((err, connection) => {
         sep INT,
         oct INT,
         nov INT,
-        dec INT,
+        \`dec\` INT,
         total INT
     )`, (error, results, fields) => {
         connection.release(); // Release the connection
@@ -211,7 +211,7 @@ app.post('/api/annual-figures', (req, res) => {
     const { species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec } = req.body;
     const total = jan + feb + mar + apr + may + jun + jul + aug + sep + oct + nov + dec;
 
-    const sql = 'INSERT INTO annual_figures (species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO annual_figures (species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, `dec`, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const values = [species, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec, total];
 
     pool.query(sql, values, (err, results) => {
@@ -246,7 +246,7 @@ app.put('/api/annual-figures/:id', (req, res) => {
             sep = ?, 
             oct = ?, 
             nov = ?, 
-            dec = ?, 
+            \`dec\` = ?, 
             total = ?
         WHERE 
             id = ?
