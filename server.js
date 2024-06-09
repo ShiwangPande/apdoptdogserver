@@ -68,6 +68,30 @@ pool.getConnection((err, connection) => {
     });
 });
 
+// Create the 'timeline_events' table if it doesn't exist
+pool.getConnection((err, connection) => {
+    if (err) {
+        console.error('Error connecting to MySQL:', err);
+        return;
+    }
+
+    connection.query(`
+    CREATE TABLE IF NOT EXISTS timeline_events (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        date DATE,
+        title VARCHAR(255),
+        description TEXT
+    )`, (error, results, fields) => {
+        connection.release(); // Release the connection
+        if (error) {
+            console.error('Error creating timeline_events table:', error);
+        } else {
+            console.log('Timeline events table created successfully');
+        }
+    });
+});
+
+
 // Update the 'pic' column type to LONGTEXT if it already exists
 pool.getConnection((err, connection) => {
     if (err) {
@@ -271,6 +295,81 @@ app.delete('/api/annual-figures/:id', (req, res) => {
             return res.status(400).json('Error: ' + err.message);
         }
         res.json({ deletedID: id });
+    });
+});
+
+app.post('/api/timeline-events', (req, res) => {
+    const { date, title, description } = req.body;
+
+    const sql = 'INSERT INTO timeline_events (date, title, description) VALUES (?, ?, ?)';
+    const values = [date, title, description];
+
+    pool.query(sql, values, (err, results) => {
+        if (err) {
+            console.error('Error executing query: ', err);
+            res.status(500).json({ error: 'Error executing query', details: err.message });
+            return;
+        }
+
+        console.log('Timeline event added successfully');
+        res.status(200).json({ message: 'Timeline event added successfully' });
+    });
+});
+
+// Get all timeline events
+app.get('/api/timeline-events', (req, res) => {
+    const query = `SELECT * FROM timeline_events`;
+
+    pool.query(query, (err, rows) => {
+        if (err) {
+            return res.status(400).json('Error: ' + err.message);
+        }
+        res.json(rows);
+    });
+});
+
+app.put('/api/timeline-events/:id', (req, res) => {
+    const { id } = req.params;
+    const { date, title, description } = req.body;
+
+    const sql = `
+        UPDATE timeline_events 
+        SET 
+            date = ?, 
+            title = ?, 
+            description = ? 
+        WHERE 
+            id = ?
+    `;
+    const values = [date, title, description, id];
+
+    pool.query(sql, values, (err, results) => {
+        if (err) {
+            console.error('Error executing query: ', err);
+            res.status(500).json({ error: 'Error executing query', details: err.message });
+            return;
+        }
+
+        console.log('Timeline event updated successfully');
+        res.status(200).json({ message: 'Timeline event updated successfully' });
+    });
+});
+
+// Delete a timeline event
+app.delete('/api/timeline-events/:id', (req, res) => {
+    const { id } = req.params;
+
+    const sql = `DELETE FROM timeline_events WHERE id = ?`;
+
+    pool.query(sql, [id], (err, results) => {
+        if (err) {
+            console.error('Error executing query: ', err);
+            res.status(500).json({ error: 'Error executing query', details: err.message });
+            return;
+        }
+
+        console.log('Timeline event deleted successfully');
+        res.status(200).json({ message: 'Timeline event deleted successfully' });
     });
 });
 
